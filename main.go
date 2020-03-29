@@ -10,8 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func initDB(db *sql.DB, rootpath string) []structs.Category {
-	var cats []structs.Category
+func initDB(db *sql.DB, rootpath string) {
 	folders, _ := structs.GetContent(rootpath)
 
 	for _, folder := range folders {
@@ -20,7 +19,6 @@ func initDB(db *sql.DB, rootpath string) []structs.Category {
 
 		category := structs.Category{Name: name, Path: path}
 		category.GetArtist(db)
-		cats = append(cats, category)
 	}
 }
 
