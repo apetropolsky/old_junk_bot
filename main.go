@@ -2,61 +2,28 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
-	"sort"
+	"os"
 
-	"github.com/apetropolsky/pmc_bot/db"
-	"github.com/apetropolsky/pmc_bot/structs"
+	"github.com/apetropolsky/pmc_bot/query"
 	_ "github.com/lib/pq"
 )
 
-func initDB(db *sql.DB, rootpath string) {
-	folders, _ := structs.GetContent(rootpath)
+// connectDB is a simple database connector
+func connectDB() (*sql.DB, error) {
+	connStr := "dbname=test user=postgres host=localhost sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
 
-	for _, folder := range folders {
-		name := folder.Name()
-		path := fmt.Sprintf("%s/%s", rootpath, folder.Name())
-
-		category := structs.Category{Name: name, Path: path}
-		category.GetArtist(db)
-	}
-}
-
-func main() {
-
-	db, err := db.ConnectDB()
-	initDB(db, "/media/admn/data/mp3")
-
-	var artist string
-	var name string
-	var result []string
-
-	resSrt := fmt.Sprintf(
-		`SELECT DISTINCT artist, name 
-		FROM tracks WHERE 
-		category = $$%[1]s$$ AND album = $$%[1]s$$;`,
-		"Rock",
-	)
-	rows, err := db.Query(resSrt)
 	if err != nil {
 		panic(err)
 	}
 
-	defer rows.Close()
+	return db, err
+}
 
-	for rows.Next() {
-		err := rows.Scan(&artist, &name)
-		if err != nil {
-			panic(err)
-		}
-		aa := artist + " - " + name
-		result = append(result, aa)
-	}
+func main() {
+	db, _ := connectDB()
+	query.InitDB(db, "/media/admn/data/mp3")
 
-	sort.Strings(result)
-	for _, rec := range result {
-		fmt.Println(rec)
-	}
-
+	query.Album(db, os.Args[1])
 	defer db.Close()
 }
